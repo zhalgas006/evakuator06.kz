@@ -1,0 +1,1 @@
+# evakuator06.kz
