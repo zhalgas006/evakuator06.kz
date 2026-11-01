@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель Управления — Эвакуатор Атырау</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="icon" type="image/png" href="23.png">
+    <link rel="apple-touch-icon" href="23.png">
+    <style>
+        .d-none { display: none !important; }
+        .text-amber { color: #f59e0b; }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. ВХОД В СИСТЕМУ (LOGIN) -->
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fa-solid fa-truck-pickup"></i>
+            </div>
+            <h1 class="login-title">Панель Управления</h1>
+            <p class="login-subtitle">Эвакуатор Атырау — Система администрирования</p>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginUsername"><i class="fa-solid fa-user"></i> Логин</label>
+                    <input type="text" id="loginUsername" class="form-control" placeholder="admin" value="admin" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fa-solid fa-lock"></i> Пароль</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" value="admin123" required>
+                </div>
+
+                <div id="loginError" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 16px; font-weight: 600;"></div>
+
+                <button type="submit" class="btn-adm btn-adm-primary">
+                    <i class="fa-solid fa-right-to-bracket"></i> Войти в систему
+                </button>
+            </form>
+
+            <div style="margin-top: 24px; font-size: 0.8rem; color: var(--adm-text-muted);">
+                Вход по умолчанию: <b>admin</b> / <b>admin123</b>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ЭКРАН УПРАВЛЕНИЯ (DASHBOARD) -->
+    <div id="dashboardScreen" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <i class="fa-solid fa-truck-pickup text-amber" style="font-size: 1.5rem;"></i>
+                <div>
+                    <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px;">ЭВАКУАТОР АТЫРАУ</span>
+                    <span class="brand-badge">ADMIN</span>
+                </div>
+            </div>
+
+            <nav class="header-nav">
+                <button id="tabBtn_orders" class="nav-tab active" onclick="switchTab('orders')">
+                    <i class="fa-solid fa-list-check"></i> Заказы
+                </button>
+                <button id="tabBtn_services" class="nav-tab" onclick="switchTab('services')">
+                    <i class="fa-solid fa-tags"></i> Услуги и цены
+                </button>
+                <button id="tabBtn_settings" class="nav-tab" onclick="switchTab('settings')">
+                    <i class="fa-solid fa-gear"></i> Настройки
+                </button>
+            </nav>
+
+            <div class="header-user">
+                <a href="index.html" target="_blank" class="btn-adm btn-adm-outline btn-adm-sm" style="text-decoration: none;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть сайт
+                </a>
+                <button onclick="handleLogout()" class="btn-adm btn-adm-danger btn-adm-sm">
+                    <i class="fa-solid fa-right-from-bracket"></i> Выйти
+                </button>
+            </div>
+        </header>
+
+        <!-- Notice if in file:/// mode -->
+        <div id="localModeNotice" class="d-none" style="background: #1e3a8a; color: #fff; padding: 10px 24px; font-size: 0.88rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <i class="fa-solid fa-circle-info" style="margin-right: 8px;"></i>
+                <b>Локальный режим:</b> Для использования реальной базы данных SQLite/MySQL откройте сайт через PHP-сервер (например: <code>php -S localhost:8000</code> или на хостинге). Сейчас отображаются демо-данные.
+            </div>
+        </div>
+
+        <main class="main-wrapper">
+
+            <!-- TAB 1: ЗАКАЗЫ (ORDERS) -->
+            <div id="tab_orders" class="tab-content">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-val" id="statTotal">0</div>
+                            <div class="stat-lbl">Всего заявок</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card new">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-val" id="statNew" style="color: #fbbf24;">0</div>
+                            <div class="stat-lbl">Новые заказы</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(147, 51, 234, 0.15); color: #c084fc;">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-val" id="statInProgress">0</div>
+                            <div class="stat-lbl">В работе</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-val" id="statCompleted">0</div>
+                            <div class="stat-lbl">Завершенные</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="filter-pills">
+                        <button class="pill-btn active" data-status="all" onclick="filterOrdersByStatus('all', this)">Все</button>
+                        <button class="pill-btn" data-status="new" onclick="filterOrdersByStatus('new', this)">Новые</button>
+                        <button class="pill-btn" data-status="accepted" onclick="filterOrdersByStatus('accepted', this)">Приняты</button>
+                        <button class="pill-btn" data-status="in_progress" onclick="filterOrdersByStatus('in_progress', this)">В работе</button>
+                        <button class="pill-btn" data-status="completed" onclick="filterOrdersByStatus('completed', this)">Завершены</button>
+                        <button class="pill-btn" data-status="cancelled" onclick="filterOrdersByStatus('cancelled', this)">Отменены</button>
+                    </div>
+
+                    <div class="toolbar-search">
+                        <input type="text" id="orderSearch" class="search-input" placeholder="Телефон, имя, адрес..." oninput="loadOrders()">
+                        <button onclick="loadOrders()" class="btn-adm btn-adm-outline btn-adm-sm" title="Обновить">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        <button onclick="exportOrdersCSV()" class="btn-adm btn-adm-success btn-adm-sm" title="Скачать Excel / CSV">
+                            <i class="fa-solid fa-file-excel"></i> Экспорт в Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="table-card">
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>Время</th>
+                                    <th>Клиент</th>
+                                    <th>Автомобиль</th>
+                                    <th>Местоположение</th>
+                                    <th>Услуга / Цена</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <!-- JS арқылы толтырылады -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--adm-text-muted);">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="autoRefreshCheck" checked>
+                        Автообновление (каждые 25 сек)
+                    </label>
+                </div>
+            </div>
+
+            <!-- TAB 2: УСЛУГИ И ЦЕНЫ (SERVICES & PRICING) -->
+            <div id="tab_services" class="tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 style="font-size: 1.5rem; font-weight: 800;">Услуги и Цены</h2>
+                        <p style="color: var(--adm-text-muted); font-size: 0.9rem; margin-top: 4px;">
+                            Измененные здесь услуги и цены сразу отображаются на сайте
+                        </p>
+                    </div>
+                    <button onclick="openAddServiceModal()" class="btn-adm btn-adm-primary">
+                        <i class="fa-solid fa-plus"></i> Добавить услугу
+                    </button>
+                </div>
+
+                <div id="servicesAdminGrid" class="services-admin-grid">
+                    <!-- JS арқылы толтырылады -->
+                </div>
+            </div>
+
+            <!-- TAB 3: НАСТРОЙКИ (SETTINGS) -->
+            <div id="tab_settings" class="tab-content" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px;">
+                    
+                    <!-- Контактные данные -->
+                    <div class="stat-card" style="display: block;">
+                        <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px;">
+                            <i class="fa-solid fa-address-book text-amber"></i> Контактная информация
+                        </h3>
+                        <form onsubmit="saveContactSettings(event)">
+                            <div class="form-group">
+                                <label for="setPhone">Номер телефона</label>
+                                <input type="text" id="setPhone" class="form-control" value="+7 778 140 46 19" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="setWhatsapp">Номер WhatsApp (только цифры)</label>
+                                <input type="text" id="setWhatsapp" class="form-control" value="77781404619" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="setCity">Город / Регион</label>
+                                <input type="text" id="setCity" class="form-control" value="г. Атырау и область">
+                            </div>
+                            <div class="form-group">
+                                <label for="setHours">Режим работы</label>
+                                <input type="text" id="setHours" class="form-control" value="Круглосуточно 24/7">
+                            </div>
+                            <button type="submit" class="btn-adm btn-adm-primary" style="width: 100%;">
+                                <i class="fa-solid fa-floppy-disk"></i> Сохранить
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Смена пароля -->
+                    <div class="stat-card" style="display: block;">
+                        <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px;">
+                            <i class="fa-solid fa-shield-halved text-amber"></i> Пароль администратора
+                        </h3>
+                        <form id="passwordForm" onsubmit="changePassword(event)">
+                            <div class="form-group">
+                                <label for="oldPassword">Текущий пароль</label>
+                                <input type="password" id="oldPassword" class="form-control" required placeholder="admin123">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">Новый пароль</label>
+                                <input type="password" id="newPassword" class="form-control" required placeholder="Не менее 6 символов">
+                            </div>
+                            <button type="submit" class="btn-adm btn-adm-outline" style="width: 100%;">
+                                <i class="fa-solid fa-key"></i> Обновить пароль
+                            </button>
+                        </form>
+
+                        <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--adm-border);">
+                            <div style="font-size: 0.85rem; color: var(--adm-text-muted); margin-bottom: 8px;">
+                                Статус базы данных и системы:
+                            </div>
+                            <span id="dbInfoBadge" class="badge-status status-accepted" style="font-size: 0.85rem;">
+                                SQLite / MySQL
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 3. МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ УСЛУГИ -->
+    <div id="serviceModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="serviceModalTitle" style="font-weight: 800; font-size: 1.25rem;">Добавить услугу</h3>
+                <button type="button" class="modal-close" onclick="closeServiceModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="serviceForm" onsubmit="handleServiceSubmit(event)">
+                <input type="hidden" id="serviceId">
+
+                <div class="form-group">
+                    <label for="serviceTitle">Название услуги (Заголовок) *</label>
+                    <input type="text" id="serviceTitle" class="form-control" placeholder="Например: Эвакуация после ДТП" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div class="form-group">
+                        <label for="servicePrice">Цена *</label>
+                        <input type="text" id="servicePrice" class="form-control" placeholder="от 10 000 ₸" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceIcon">Иконка (FontAwesome)</label>
+                        <input type="text" id="serviceIcon" class="form-control" placeholder="fa-solid fa-car-burst" value="fa-solid fa-truck-pickup">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="serviceDesc">Описание</label>
+                    <textarea id="serviceDesc" class="form-control" rows="3" placeholder="Краткая информация об услуге..."></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="serviceSort">Порядковый номер (Сортировка)</label>
+                        <input type="number" id="serviceSort" class="form-control" value="0">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; padding-top: 24px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="serviceIsActive" checked>
+                            <b>Показывать на сайте</b>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-adm btn-adm-outline" onclick="closeServiceModal()">Отмена</button>
+                    <button type="submit" class="btn-adm btn-adm-primary">
+                        <i class="fa-solid fa-check"></i> Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+
+</html>
